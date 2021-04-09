@@ -1,6 +1,7 @@
 import numpy as np 
 import math
 from numpy import linalg as LA
+import sys
 
 def read_vector(path):
     with open(path,"r") as f:
@@ -66,12 +67,7 @@ def proxB(B,x,xhat,teta):
     return p
 
 def proxl1(x,w):
-    N = len(x)
-    p = np.zeros((N,N))
-    p[p>w] -= w
-    p[p<-w] += w
-    p[p<0] = 0
-    return p
+    return np.sign(x) * np.maximum(np.abs(x)-w,0.)
 
 def proxl2(x,y,eta):
     t = x - y
@@ -119,8 +115,14 @@ def pds(K,y,eta,nbiter):
         uuk = zk - sigma*proxl2(zk/sigma, y, eta)
         xk = xk_old + ro*(xxk - xk_old)
         uk = uk_old + ro*(uuk - uk_old)
-        ex = LA.norm(xk-xk_old)**2 / LA.norm(xk)**2
-        eu = LA.norm(uk-uk_old)**2 / LA.norm(uk)**2
+        xk_norm =  LA.norm(xk)**2
+        uk_norm = LA.norm(uk)**2
+        if (xk_norm == 0) or (uk_norm == 0):
+            ex = sys.maxsize
+            eu = sys.maxsize
+        else:
+            ex = LA.norm(xk-xk_old)**2 / xk_norm 
+            eu = LA.norm(uk-uk_old)**2 / uk_norm
         if ex < prec and eu < prec :
             break
         refspec[i] = ex
@@ -154,7 +156,14 @@ if __name__ == '__main__' :
     B = A / gamma
     xhat = xtrue + np.random.rand(xtrue.shape[0],1)
 
-    print(pds(K,y,eta,10))
+    xk = pds(K,y,xi,10)[0]
+    xxk = xk - (1/B)*gradlplq(xk,alpha,beta,eta,
+                        p,q)
+    xk = proxPPXAplus(K,B,xxk,y,xi,
+                    5000,1e-12)[0]
+    print(xk)
+    
+
 
 
 

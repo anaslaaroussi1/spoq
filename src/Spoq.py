@@ -19,21 +19,27 @@ class FBPPXALpLq(object):
         self.N = K.shape[-1]
         self.xi = xi
         self.xtrue = xtrue
-        self.mysnr = np.zeros((nbiter,1))
-        self.fcost = np.zeros((nbiter,1))
-        self.Bwhile = np.zeros((nbiter,1))
+        self.xk = utils.pds(K,y,xi,10)[0]
+        self.Bwhile = []
         self.Time = []
         self.max_iter = 5000
         self.gamma = 1
         self.prec = 1e-12
         self.L = utils.ComputeLipschitz(alpha,beta,eta,p,q,self.N)
         self.metric = metric
-        self.xk = utils.pds(K,y,xi,10)[0]
-        self.mysnr[0] = -10*math.log10(np.sum((self.xk-xtrue)**2) / np.sum(xtrue**2))
-        self.fcost[0] = utils.Fcost(self.xk,alpha,beta,eta,p,q)
-    
+        self.mysnr = [-10*math.log10(np.sum((self.xk-xtrue)**2) / np.sum(xtrue**2))]
+        self.fcost = [utils.Fcost(self.xk,alpha,beta,eta,p,q)]
+
+        
+        
+        
+    def update_xk(self):
+        
+
     def run(self):
+        print("running :\n")
         for k in range(self.nbiter):
+            print("starting iteration {0!s}\n".format(k))
             xk_old = self.xk
             if k%100 == 0 :
                 print("it = {!s} : fcost = {!s} \n".format(k,self.fcost[k-1]))
@@ -45,7 +51,8 @@ class FBPPXALpLq(object):
                 xxk = self.xk - (1/B)*utils.gradlplq(self.xk,self.alpha,self.beta,self.eta,
                                             self.p,self.q)
                 self.xk = utils.proxPPXAplus(self.K,B,xxk,self.y,self.xi,
-                                            self.max_iter,self.prec)
+                                            self.max_iter,self.prec)[0]
+                self.Bwhile.append(0)
             elif self.metric == 1:
                 A = utils.condlplq(self.xk,self.alpha,self.beta,self.eta,
                                     self.p,self.q,0)           
@@ -53,7 +60,8 @@ class FBPPXALpLq(object):
                 xxk = self.xk - (1/B)*utils.gradlplq(self.xk,self.alpha,self.beta,
                                                 self.eta,self.p,self.q)
                 self.xk = utils.proxPPXAplus(self.K,B,xxk,self.y,self.xi,
-                                    self.max_iter,self.prec)
+                                    self.max_iter,self.prec)[0]
+                self.Bwhile.append(0)
             else:
                 ro = np.sum(np.abs(self.xk**self.q))**(1/self.q)
                 bwhile = 0
@@ -65,7 +73,7 @@ class FBPPXALpLq(object):
                                                 self.eta,self.p,self.q)  
 
                     self.xk = utils.proxPPXAplus(self.K,B,xxk,self.y,self.xi,
-                                    self.max_iter,self.prec)
+                                    self.max_iter,self.prec)[0]
 
                     if np.sum(np.abs(self.xk)**self.q)**(1/self.q) < ro :
                         ro = ro/2
@@ -73,16 +81,17 @@ class FBPPXALpLq(object):
                     else :
                         break
 
-                self.Bwhile[k]= bwhile
+                self.Bwhile.append(bwhile)
             end_time = time.time()
             self.Time.append(end_time - start_time)
             error = LA.norm(self.xk-xk_old)**2 / LA.norm(xk_old)**2
-            self.mysnr[k+1] = -10*math.log10(np.sum((self.xk-self.xtrue)**2)/np.sum(self.xtrue**2))
-            self.fcost[k+1] = utils.Fcost(self.xk,self.alpha,self.beta,self.eta,
-                                            self.p,self.q)
+            self.mysnr.append(-10*math.log10(np.sum((self.xk-self.xtrue)**2)/np.sum(self.xtrue**2)))
+            self.fcost.append(utils.Fcost(self.xk,self.alpha,self.beta,self.eta,
+                                            self.p,self.q))
 
             if error < self.prec:
                 break
+            print("ending iteration {0!s}\n".format(k))
     
     def display_info(self):
         if self.Time:
