@@ -171,7 +171,7 @@ def FB_PPXALpLq(K, y, p, q, metric, alpha, beta, eta, xi, nbiter, xtrue, J, verb
     prec = 1e-12
     BWhile = []
     Time = []
-    # while = np.zeros((nbiter,1))
+    # Bwhile = np.zeros((nbiter,1))
     # fcost = np.zeros((nbiter,1))
     J = J  # ppxa max iterations
     # metric 0: Lip constant, 1: FBVM without TR, 2: FBVM-TR
