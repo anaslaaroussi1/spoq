@@ -2,19 +2,7 @@ import numpy as np
 import math
 from numpy import linalg as LA
 import sys
-
-def read_vector(path):
-    with open(path,"r") as f:
-        v = f.readlines()
-        v = np.array([float(x[:-1]) for x in v])
-    return v
-
-
-def read_matrix(path):
-    with open(path,"r") as f:
-        K = f.readlines()
-        K = np.array([x[:-1].split() for x in K],dtype=float)
-    return K
+import time
 
 
 def ComputeLipschitz(alpha,beta,eta,p,q,N):
@@ -132,44 +120,72 @@ def pds(K,y,eta,nbiter):
         uk_old = uk
     return xk,refspec
 
-    
-
-
-
-
-if __name__ == '__main__' :
-    xtrue = read_vector("../data/x")
-    K = read_matrix("../data/K")
-    y = K*xtrue
-    sigma = 0.1*np.max(y)/100
-    noise = read_vector('../data/noise')
-    y = y + sigma*noise
-    N = len(xtrue)
-    xi = 1.1*math.sqrt(N)*sigma
-    eta = 2E-6
-    alpha = 7E-7
-    beta = 3E-2
-    p = 0.75
-    q = 2
-    nbiter=5000
+def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue):
+    N = K.shape[1]
+    xk_old= pds(K,y,xi,10)[0]
+    mysnr = [-10*math.log10(np.sum((xk_old-xtrue)**2) / np.sum(xtrue**2))]
+    fcost = [Fcost(xk_old,alpha,beta,eta,p,q)]
+    gamma = 1
+    prec = 1e-12
+    BWhile = []
+    Time = []
+    #Bwhile = np.zeros((nbiter,1))
+    #fcost = np.zeros((nbiter,1))
+    J = 50
     L = ComputeLipschitz(alpha,beta,eta,p,q,N)
-    gamma = 1.0
-    A = L*np.ones((N,1))
-    B = A / gamma
-    xhat = xtrue + np.random.rand(xtrue.shape[0],1)
+    for k in range(nbiter):
+        if k%100 == 0:
+            print("it = {!s} : fcost = {!s} \n".format(k,fcost[k-1]))
+        start_time = time.time()
 
-    xk,r = pds(K,y,xi,50)
-    print(xk[xk!=0])
-    print(r)
-    #xxk = xk - (1/B)*gradlplq(xk,alpha,beta,eta,
-    #                    p,q)
-    #xk = proxPPXAplus(K,B,xxk,y,xi,
-    #                5000,1e-12)[0]
-    #print(xk)
-    
-    
+        if metric == 0 :
+            A = L*np.ones((N,1))
+            B = A / gamma
+            xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)
+            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)[0]
+            BWhile.append(0)
+        elif metric == 1:
+            A = condlplq(xk,alpha,beta,eta,p,q,0)           
+            B = A / gamma
+            xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)
+            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)[0]
+            BWhile.append(0)
+        else:
+            print("here {!s}".format(k))
+            ro = np.sum(np.abs(xk_old**q))**(1/q)
+            bwhile = 0
+            while True:
+                print("I am in the while number {}".format(bwhile))
+                A = condlplq(xk_old,alpha,beta,eta,p,q,ro)
+                B = A/gamma
+                xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)                                    
+                xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)
+
+                if np.sum(np.abs(xk)**q)**(1/q) < ro:
+                    ro = ro/2
+                    bwhile = bwhile + 1
+                else:
+                    break
+            BWhile.append(bwhile)
+
+        end_time = time.time()
+        Time.append(end_time - start_time)
+        mysnr.append(-10*math.log10(np.sum((xk-xtrue)**2)/np.sum(xtrue**2)))
+        fcost.append(Fcost(xk,alpha,beta,eta,p,q))
+        error = LA.norm(xk-xk_old)**2 / LA.norm(xk_old)**2
+        if error < prec:
+            break
+
+        xk_old = xk
+
+    return xk_old,fcost,BWhile,Time,mysnr
 
 
+
+
+
+                    
+            
 
 
 
