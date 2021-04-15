@@ -25,11 +25,13 @@ def ComputeLipschitz(alpha,beta,eta,p,q,N):
 
 def Lpsmooth(x,alpha,p):
     res = np.sum((x**2 + alpha**2)**(p/2) - alpha**p)
-    return res**(1/p)
+    res = res**(1/p)
+    return res
 
 def Lqsmooth(x,mu,q):
     res = mu**q + np.sum(np.abs(x)**q)
-    return res**(1/q)
+    res = res**(1/q)
+    return res
 
 def Fcost(x,alpha,beta,mu,p,q):
     lp = (np.sum((x**2 + alpha**2)**(p/2)) - alpha**p)**(1/q)
@@ -55,11 +57,11 @@ def norm2(K,N,nbiter=50):
     K_transpose = K.transpose()
     i = 0
     while i < nbiter:
-        tmp = K_transpose*(K*b)
+        tmp = np.dot(K_transpose,np.dot(K,b))
         tmp_norm = LA.norm(tmp)
         b = tmp / tmp_norm
         i += 1
-    return LA.norm(K*b)
+    return LA.norm(np.dot(K,b))
 
 def proxB(B,x,xhat,teta):
     p = (x+teta*(B*xhat)) / (1 + teta*B)
@@ -77,17 +79,17 @@ def proxl2(x,y,eta):
 def proxPPXAplus(D,B,x,y,eta,J,prec):
     N = D.shape[1]
     x1k_old = x
-    x2k_old = D*x1k_old
+    x2k_old = np.dot(D,x1k_old)
     D_transpose = D.transpose()
-    A = LA.inv(np.eye(N) + D_transpose*D)
-    zk_old = A*(x1k_old + D_transpose*x2k_old)
+    A = LA.inv(np.eye(N) + np.dot(D_transpose,D))
+    zk_old = np.dot(A,x1k_old + np.dot(D_transpose,x2k_old))
     teta = 1.9
     for j in range(J):
         y1k_old = proxB(B,x1k_old,x,teta)       
         y2k_old = proxl2(x2k_old,y,eta)
-        vk_old = A*(y1k_old + D_transpose*y2k_old)
+        vk_old = np.dot(A,y1k_old + np.dot(D_transpose,y2k_old))
         x1k = x1k_old + 2*vk_old - zk_old - y1k_old
-        x2k = x2k_old + D*(2*vk_old - zk_old) - y2k_old
+        x2k = x2k_old + np.dot(D,2*vk_old - zk_old) - y2k_old
         zk = vk_old
         error = LA.norm(zk-zk_old)**2
         if error < prec:
@@ -106,12 +108,12 @@ def pds(K,y,eta,nbiter):
     ro = 1.0
     refspec = np.zeros((nbiter,1))
     xk_old = np.ones((N,1))
-    uk_old = K*xk_old
+    uk_old = np.dot(K,xk_old)
     prec = 1e-6
     K_transpose = K.transpose()
     for i in range(nbiter):
-        xxk = proxl1(xk_old - tau*K_transpose*uk_old, tau)
-        zk = uk_old + sigma*K*(2*xxk-xk_old)
+        xxk = proxl1(xk_old - tau*np.dot(K_transpose,uk_old), tau)
+        zk = uk_old + sigma*np.dot(K,2*xxk-xk_old)
         uuk = zk - sigma*proxl2(zk/sigma, y, eta)
         xk = xk_old + ro*(xxk - xk_old)
         uk = uk_old + ro*(uuk - uk_old)
@@ -156,12 +158,15 @@ if __name__ == '__main__' :
     B = A / gamma
     xhat = xtrue + np.random.rand(xtrue.shape[0],1)
 
-    xk = pds(K,y,xi,10)[0]
-    xxk = xk - (1/B)*gradlplq(xk,alpha,beta,eta,
-                        p,q)
-    xk = proxPPXAplus(K,B,xxk,y,xi,
-                    5000,1e-12)[0]
-    print(xk)
+    xk,r = pds(K,y,xi,50)
+    print(xk[xk!=0])
+    print(r)
+    #xxk = xk - (1/B)*gradlplq(xk,alpha,beta,eta,
+    #                    p,q)
+    #xk = proxPPXAplus(K,B,xxk,y,xi,
+    #                5000,1e-12)[0]
+    #print(xk)
+    
     
 
 
