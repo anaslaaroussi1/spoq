@@ -64,7 +64,7 @@ def proxl2(x,y,eta):
     s = t*min(eta/LA.norm(t),1)
     return x + s - t
 
-def proxPPXAplus(D,B,x,y,eta,J,prec):
+def proxPPXAplus(D,B,x,y,eta,J,prec,verbosity):
     N = D.shape[1]
     x1k_old = x
     x2k_old = np.dot(D,x1k_old)
@@ -81,7 +81,8 @@ def proxPPXAplus(D,B,x,y,eta,J,prec):
         zk = vk_old
         error = LA.norm(zk-zk_old)**2
         if error < prec:
-            print("PPXA stops at j = {0!s}".format(j))
+            if verbosity == 1:
+                print("PPXA stops at j = {0!s}".format(j))
             break
         x1k_old = x1k
         x2k_old = x2k
@@ -120,7 +121,7 @@ def pds(K,y,eta,nbiter):
         uk_old = uk
     return xk,refspec
 
-def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue):
+def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue,J,verbosity):
     N = K.shape[1]
     xk_old= pds(K,y,xi,10)[0]
     mysnr = [-10*math.log10(np.sum((xk_old-xtrue)**2) / np.sum(xtrue**2))]
@@ -131,7 +132,7 @@ def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue):
     Time = []
     #Bwhile = np.zeros((nbiter,1))
     #fcost = np.zeros((nbiter,1))
-    J = 50
+    J = J
     L = ComputeLipschitz(alpha,beta,eta,p,q,N)
     for k in range(nbiter):
         if k%100 == 0:
@@ -142,24 +143,22 @@ def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue):
             A = L*np.ones((N,1))
             B = A / gamma
             xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)
-            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)[0]
+            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec,verbosity)[0]
             BWhile.append(0)
         elif metric == 1:
             A = condlplq(xk,alpha,beta,eta,p,q,0)           
             B = A / gamma
             xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)
-            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)[0]
+            xk = proxPPXAplus(K,B,xxk,y,xi,J,prec,verbosity)[0]
             BWhile.append(0)
         else:
-            print("here {!s}".format(k))
             ro = np.sum(np.abs(xk_old**q))**(1/q)
             bwhile = 0
             while True:
-                print("I am in the while number {}".format(bwhile))
                 A = condlplq(xk_old,alpha,beta,eta,p,q,ro)
                 B = A/gamma
                 xxk = xk_old - (1/B)*gradlplq(xk_old,alpha,beta,eta,p,q)                                    
-                xk = proxPPXAplus(K,B,xxk,y,xi,J,prec)
+                xk = proxPPXAplus(K,B,xxk,y,xi,J,prec,verbosity)
 
                 if np.sum(np.abs(xk)**q)**(1/q) < ro:
                     ro = ro/2
@@ -178,7 +177,7 @@ def FB_PPXALpLq(K,y,p,q,metric,alpha,beta,eta,xi,nbiter,xtrue):
 
         xk_old = xk
 
-    return xk_old,fcost,BWhile,Time,mysnr
+    return xk_old,np.array(fcost),np.array(BWhile),np.array(Time),np.array(mysnr)
 
 
 

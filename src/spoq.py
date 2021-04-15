@@ -1,5 +1,5 @@
-import utils
-import parser
+from src import utils
+from src import parser
 import os
 import numpy as np
 import math
@@ -7,8 +7,8 @@ import time
 
 
 class SPOQ(object):
-    def __init__(self):
-        self.input_path = os.path.join(os.path.dirname(os.getcwd()),"inputs")
+    def __init__(self,J=5000,verbosity=0):
+        self.input_path = os.path.join(os.getcwd(),"inputs")
         self.params = parser.ParamParser(os.path.join(self.input_path,"params.config"))
         self.K = parser.read_matrix(os.path.join(self.input_path,self.params.K))
         self.noise = parser.read_vector(os.path.join(self.input_path,self.params.noise))
@@ -29,11 +29,14 @@ class SPOQ(object):
         self._Bwhile = None
         self._Time = None
         self._mysnr = None
+        self.J = J
+        self.verbosity = verbosity
+
     
     def run(self):
         self._xk,self._fcost,self._Bwhile,self._Time,self._mysnr = utils.FB_PPXALpLq(self.K,
                         self.y,self.p,self.q,self.metric,self.alpha,self.beta,self.eta,
-                        self.xi,self.nbiter,self.x)
+                        self.xi,self.nbiter,self.x,self.J,self.verbosity)
     @property 
     def xk(self):
         return self._xk
@@ -49,13 +52,10 @@ class SPOQ(object):
     @property
     def mysnr(self):
         return self._mysnr
+    @property
+    def xtrue(self):
+        return self.x
 
-
-if __name__ == "__main__" :
-
-    s = SPOQ()
-    s.run()
-    print(s.xk)
 
         
 
