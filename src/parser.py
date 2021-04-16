@@ -102,16 +102,16 @@ class DataReader(object):
 
     @property
     def xtrue(self):
-        return self._xtrue
+        return self._xtrue.reshape(-1,1)
     @property
     def K(self):
         return self._K
     @property
     def y(self):
-        return self._y
+        return self._y.reshape(-1,1)
     @property
     def noise(self):
-        return self._noise
+        return self._noise.reshape(-1,1)
     @property
     def sigma(self):
         return self._sigma
