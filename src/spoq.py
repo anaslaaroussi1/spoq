@@ -7,13 +7,12 @@ import time
 
 
 class SPOQ(object):
-    def __init__(self, J=5000, verbosity=0):
+    def __init__(self,K=None,x=None,noise=None,sigma=None,y=None,J=5000, verbosity=0):
         self.input_path = os.path.join(os.getcwd(), "inputs")
         self.params = parser.ParamParser(os.path.join(self.input_path, "params.config"))
-        self.K = parser.read_matrix(os.path.join(self.input_path, self.params.K))
-        self.noise = parser.read_vector(os.path.join(self.input_path, self.params.noise))
-        self.x = parser.read_vector(os.path.join(self.input_path, self.params.x))
-        self.y = parser.read_vector(os.path.join(self.input_path, self.params.y))
+        self.K = K
+        self.noise = noise
+        self.x = x
         self.alpha = self.params.alpha
         self.beta = self.params.beta
         self.nbiter = self.params.nbiter
@@ -21,9 +20,10 @@ class SPOQ(object):
         self.eta = self.params.eta
         self.p = self.params.p
         self.q = self.params.q
-        self.sigma = 0.1 * np.max(self.y) / 100
+        self.sigma = sigma
         self.N = len(self.x)
         self.xi = 1.1 * math.sqrt(self.N) * self.sigma
+        self.y = y
         self._xk = None
         self._fcost = None
         self._Bwhile = None

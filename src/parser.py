@@ -1,7 +1,7 @@
 import configparser
 import numpy as np
 import os
-
+from scipy.linalg import pascal, toeplitz
 
 def read_vector(path):
     with open(path, "r") as f:
@@ -16,6 +16,66 @@ def read_matrix(path):
         K = np.array([x[:-1].split() for x in K], dtype=float)
     return K
 
+class DataGenerator(object):
+    def __init__(self,nSample,nPeak,peakWidth):
+        self._xtrue = np.zeros((nSample,1))
+        xtrueLocation = np.random.choice(nSample, nPeak, replace=False)
+        xtrueAmplitude = np.random.rand(nPeak).reshape(-1,1)
+        self._xtrue[xtrueLocation,:] = xtrueAmplitude
+        peakMatrix = pascal(peakWidth) 
+        peakShape = np.diag(np.fliplr(peakMatrix))
+        peakShape = peakShape/np.sum(peakShape)
+        peakShape = peakShape.reshape(-1,1)
+        peakShapeFilled = np.concatenate((peakShape,np.zeros((nSample-peakWidth,1))))
+        self._K = toeplitz(peakShapeFilled)
+        self._y = np.dot(self._K,self._xtrue)
+        self._noise = np.random.normal(size=(nSample,1))
+        self._sigma = 0.5*np.max(self._y)/100
+        self._y = self._y + self._sigma*self._noise
+
+    @property
+    def xtrue(self):
+        return self._xtrue
+    @property
+    def K(self):
+        return self._K
+    @property
+    def y(self):
+        return self._y
+    @property
+    def noise(self):
+        return self._noise
+    @property
+    def sigma(self):
+        return self._sigma
+
+class DataReader(object):
+    def __init__(self):
+        input_path = os.path.join(os.getcwd(), "inputs")
+        self._xtrue = read_vector(os.path.join(input_path,"x"))
+        self._K = read_matrix(os.path.join(input_path,"K"))
+        self._noise = read_vector(os.path.join(input_path,"noise"))
+        self._y =  np.dot(self._K,self._xtrue)
+        self._sigma = 0.1*np.max(self._y)/100
+        self._y = self._y + self._sigma*self._noise
+        
+
+    @property
+    def xtrue(self):
+        return self._xtrue
+    @property
+    def K(self):
+        return self._K
+    @property
+    def y(self):
+        return self._y
+    @property
+    def noise(self):
+        return self._noise
+    @property
+    def sigma(self):
+        return self._sigma
+
 
 class ParamParser(object):
     def __init__(self, path):
@@ -28,10 +88,7 @@ class ParamParser(object):
         self._p = float(self.config["PARAMS"]["p"])
         self._q = float(self.config["PARAMS"]["q"])
         self._nbiter = int(self.config["PARAMS"]["nbiter"])
-        self._K = self.config["PARAMS"]["K"]
-        self._x = self.config["PARAMS"]["x"]
-        self._y = self.config["PARAMS"]["y"]
-        self._noise = self.config["PARAMS"]["noise"]
+        
 
     @property
     def alpha(self):
@@ -56,22 +113,6 @@ class ParamParser(object):
     @property
     def q(self):
         return self._q
-
-    @property
-    def K(self):
-        return self._K
-
-    @property
-    def x(self):
-        return self._x
-
-    @property
-    def y(self):
-        return self._y
-
-    @property
-    def noise(self):
-        return self._noise
 
     @property
     def nbiter(self):
