@@ -202,8 +202,7 @@ def FB_PPXALpLq(K, y, p, q, metric, alpha, beta, eta, xi, nbiter, xtrue, J, verb
                 A = condlplq(xk_old, alpha, beta, eta, p, q, ro)
                 B = A / gamma
                 xxk = xk_old - (1 / B) * gradlplq(xk_old, alpha, beta, eta, p, q)
-                xk = proxPPXAplus(K, B, xxk, y, xi, J, prec, verbosity)
-
+                xk = proxPPXAplus(K, B, xxk, y, xi, J, prec, verbosity)[0]
                 if np.sum(np.abs(xk)**q)**(1 / q) < ro:
                     ro = ro / 2
                     bwhile = bwhile + 1
