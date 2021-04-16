@@ -9,7 +9,7 @@ import argparse
 
 
 if __name__ == "__main__" :
-    
+
     argsparser = argparse.ArgumentParser()
 
     data = parser.DataGenerator(500,20,5)
@@ -35,11 +35,25 @@ if __name__ == "__main__" :
     print("Reconstruction time is {0!s} s.".format(np.sum(solver.Time)))
 
     # Plot results
+    x_time = np.cumsum(solver.Time)
+    x_time = np.insert(x_time,0,0)
     fig, ax = plt.subplots()
-    ax.plot(solver.xtrue,"ro")
-    ax.plot(solver.xk,"bo")
+    ax.plot(solver.xtrue,"ro",label = "Original signal")
+    ax.plot(solver.xk,"bo", label = "Estimated signal")
+    ax.legend()
     ax.set_title("Reconstruction results")
+
+    fig2, ax2 = plt.subplots()
+    ax2.plot(x_time,solver.mysnr,'-k',label="TR-VMFB")
+    ax2.set_title("Algorithm convergence")
+    ax2.set_xlabel("Time (s)")
+    ax2.set_ylabel("SNR (dB)")
+    ax2.legend()
     plt.show()
+    
+
+
+
     
 
     
