@@ -1,3 +1,11 @@
+""" Reusable functions
+
+This module contains different reusable functions for calculations
+
+"""
+
+
+
 import numpy as np
 import math
 from numpy import linalg as LA
@@ -6,6 +14,23 @@ import time
 
 
 def ComputeLipschitz(alpha, beta, eta, p, q, N):
+    """
+
+    Parameters
+    ----------
+    alpha : float
+    beta : float 
+    eta : float 
+    p : float
+    q : float 
+    N : int
+    
+    Returns
+    -------
+    float
+        
+
+    """
     L1 = p * (alpha**(p - 2)) / beta**p
     L2 = p / (2 * alpha**2) * max(1, (N * alpha ** p / beta**p)**2)
     L3 = (q - 1) / eta**2
@@ -13,8 +38,18 @@ def ComputeLipschitz(alpha, beta, eta, p, q, N):
 
 
 def Lpsmooth(x, alpha, p):
-    """
-    This function computes the smooth Lp norm of the vector x
+    """This function computes the smooth Lp norm of the vector x
+
+    Parameters
+    ----------
+    x : array
+    alpha : float 
+    p : float
+
+    Returns
+    -------
+    float
+        smooth Lp norm of x
     """
     res = np.sum((x**2 + alpha**2) ** (p / 2) - alpha**p)
     res = res**(1 / p)
@@ -22,8 +57,18 @@ def Lpsmooth(x, alpha, p):
 
 
 def Lqsmooth(x, mu, q):
-    """
-    This function computes the smooth Lq norm of the vector x
+    """This function computes the smooth Lq norm of the vector x
+
+    Parameters
+    ----------
+    x : array
+    mu : float 
+    q : float
+
+    Returns
+    -------
+    float
+        smooth Lq norm of x
     """
     res = mu**q + np.sum(np.abs(x)**q)
     res = res**(1 / q)
@@ -31,6 +76,21 @@ def Lqsmooth(x, mu, q):
 
 
 def Fcost(x, alpha, beta, mu, p, q):
+    """
+
+    Parameters
+    ----------
+    x : array
+    alpha : float 
+    beta : float
+    mu : float
+    p : float
+    q : float
+
+    Returns
+    -------
+    float
+    """
     lp = (np.sum((x**2 + alpha**2)**(p / 2)) - alpha**p)**(1 / q)
     lq = (mu**q + np.sum(np.abs(x)**q))**(1 / q)
     fcost = math.log(((lp**p + beta**p)**(1 / q)) / lq)
@@ -38,8 +98,23 @@ def Fcost(x, alpha, beta, mu, p, q):
 
 
 def condlplq(x, alpha, beta, eta, p, q, ro):
-    """
-    This function computes the metric matrix for the variable metric Forward-Backward algorithm
+    """This function computes the metric matrix for the variable metric Forward-Backward algorithm
+
+    Parameters
+    ----------
+    x : array
+    alpha : float 
+    beta : float
+    eta : float
+    p : float
+    q : float
+    ro : float
+
+    Returns
+    -------
+    array
+        metric matrix 
+
     """
     lp = Lpsmooth(x, alpha, p)
     Xpq = (q - 1) / ((eta**q + ro**q)**(2 / q))
@@ -48,8 +123,21 @@ def condlplq(x, alpha, beta, eta, p, q, ro):
 
 
 def gradlplq(x, alpha, beta, mu, p, q):
-    """
-    his function computes the gradient of smooth lp over lq function
+    """This function computes the gradient of smooth lp over lq function
+
+    Parameters
+    ----------
+    x : array
+    alpha : float 
+    beta : float
+    mu : float
+    p : float
+    q : float
+
+    Returns
+    -------
+    array
+        gradient of smooth lp over lq function
     """
     lp = Lpsmooth(x, alpha, p)
     lq = Lqsmooth(x, mu, q)
@@ -59,6 +147,20 @@ def gradlplq(x, alpha, beta, mu, p, q):
 
 
 def norm2(K, N, nbiter=50):
+    """
+
+    Parameters
+    ----------
+    K : array
+    N : int
+        length of the vector
+    nbiter : int
+        max number of iterations
+
+    Returns
+    -------
+    float
+    """
     b = np.random.rand(N, 1)
     K_transpose = K.transpose()
     i = 0
@@ -71,8 +173,18 @@ def norm2(K, N, nbiter=50):
 
 
 def proxB(B, x, xhat, teta):
-    """
-    This function computes the proximity operators of f(x) = (teta/2) * ||y-x||_B^2
+    """This function computes the proximity operators of f(x) = (teta/2) * ||y-x||_B^2
+
+    Parameters
+    ----------
+    B : array
+    x : array
+    xhat : array
+    teta : float
+
+    Returns
+    -------
+    array
     """
     p = (x + teta * (B * xhat)) / (1 + teta * B)
     p[p < 0] = 0
@@ -80,15 +192,32 @@ def proxB(B, x, xhat, teta):
 
 
 def proxl1(x, w):
-    """
-    proximity operator of l1 norm: Thresholding y = max(abs(x)-w,0).*sign(x);
+    """proximity operator of l1 norm: Thresholding y = max(abs(x)-w,0).*sign(x);
+
+    Parameters
+    ----------
+    x : array
+    w : float
+
+    Returns
+    -------
+    array
     """
     return np.sign(x) * np.maximum(np.abs(x) - w, 0.)
 
 
 def proxl2(x, y, eta):
-    """
-    projection onto the l2 ball
+    """projection onto the l2 ball
+
+    Parameters
+    ----------
+    x : array
+    y : array
+    eta : float
+
+    Returns
+    -------
+    array
     """
     t = x - y
     s = t * min(eta / LA.norm(t), 1)
@@ -96,8 +225,24 @@ def proxl2(x, y, eta):
 
 
 def proxPPXAplus(D, B, x, y, eta, J, prec, verbosity):
-    """
-    This function computes the proximity operator using the PPXA+ algorithm
+    """This function computes the proximity operator using the PPXA+ algorithm
+
+    Parameters
+    ----------
+    D : array
+    B : array
+    x : array
+    y : array
+    eta : float
+    J : int
+    prec : float
+    verbosity : int
+        if set to 1, running informations will be displayed
+
+    Returns
+    -------
+    tuple (array,int)
+        the result of the proximity operator with PPXA+ and the number of steps for convergence
     """
     N = D.shape[1]
     x1k_old = x
@@ -125,6 +270,20 @@ def proxPPXAplus(D, B, x, y, eta, J, prec, verbosity):
 
 
 def pds(K, y, eta, nbiter):
+    """
+
+    Parameters
+    ----------
+    K : array
+    y : array
+    eta : float
+    nbiter : int
+        max number of iterations
+
+    Returns
+    -------
+    tuple (array,array)
+    """
     M, N = K.shape
     normK = norm2(K, N)
     tau = 1 / normK
@@ -158,8 +317,32 @@ def pds(K, y, eta, nbiter):
 
 
 def FB_PPXALpLq(K, y, p, q, metric, alpha, beta, eta, xi, nbiter, xtrue, J, verbosity):
-    """
-    This function defines the Trust region algorihtm based on Forward-Backward algorithm
+    """This function defines the Trust region algorihtm based on Forward-Backward algorithm
+
+    Parameters
+    ----------
+    K : array
+        observation operator
+    y : array
+        measurment data
+    p : float 
+    q : float 
+    metric : int
+         0: Lip constant, 1: FBVM without TR, 2: FBVM-TR
+    alpha : float
+    beta : float
+    eta : float
+    xi : float
+    nbiter : int
+        max number of iterations
+    xtrue : array
+        original data
+    J : int 
+        max iterations of the the PPXA+ algorithm
+    verbosity : int
+        if set to 1, running informations will be displayed
+    
+    
     """
 
     # Initialization
@@ -174,7 +357,7 @@ def FB_PPXALpLq(K, y, p, q, metric, alpha, beta, eta, xi, nbiter, xtrue, J, verb
     # Bwhile = np.zeros((nbiter,1))
     # fcost = np.zeros((nbiter,1))
     J = J  # ppxa max iterations
-    # metric 0: Lip constant, 1: FBVM without TR, 2: FBVM-TR
+    # metric
     L = ComputeLipschitz(alpha, beta, eta, p, q, N)
 
     # Algorithm

@@ -1,9 +1,24 @@
+"""This modules provides reusable classes and functions to read data and parameters as well
+as to generate data for simulations
+"""
+
 import configparser
 import numpy as np
 import os
 from scipy.linalg import pascal, toeplitz
 
 def read_vector(path):
+    """This function reads a vector from a file
+
+    Parameters
+    ----------
+    path : str 
+        the path to the file containing the vector values
+    Returns
+    -------
+    array
+        
+    """
     with open(path, "r") as f:
         v = f.readlines()
         v = np.array([float(x[:-1]) for x in v])
@@ -11,12 +26,35 @@ def read_vector(path):
 
 
 def read_matrix(path):
+    """This function reads a matrix from a file
+
+    Parameters
+    ----------
+    path : str 
+        the path to the file containing the matrix values
+    Returns
+    -------
+    array
+        
+    """
     with open(path, "r") as f:
         K = f.readlines()
         K = np.array([x[:-1].split() for x in K], dtype=float)
     return K
 
 class DataGenerator(object):
+    """A class to generate data for simulation
+    
+    Attributes
+    ----------
+    nSample : int
+        length of the original array to generate
+    nPeak : int 
+        number of values that should be different from 0 in the original array
+    peakWidth : int
+
+    """
+
     def __init__(self,nSample,nPeak,peakWidth):
         self._xtrue = np.zeros((nSample,1))
         xtrueLocation = np.random.choice(nSample, nPeak, replace=False)
@@ -50,6 +88,8 @@ class DataGenerator(object):
         return self._sigma
 
 class DataReader(object):
+    """A class to read data from the file "inputs" for running the algorithm on the paper data
+    """
     def __init__(self):
         input_path = os.path.join(os.getcwd(), "inputs")
         self._xtrue = read_vector(os.path.join(input_path,"x"))
@@ -78,6 +118,14 @@ class DataReader(object):
 
 
 class ParamParser(object):
+    """A class to parse the params.config file for setting the input values for the SPOQ class
+    
+    Attributes
+    ----------
+    path : str
+        the path to the file containing params.config
+
+    """
     def __init__(self, path):
         self.config = configparser.ConfigParser(strict=False)
         self.config.read(path)

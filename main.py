@@ -24,7 +24,7 @@ if __name__ == "__main__" :
     else :
         data = parser.DataReader()
 
-
+    # Display results
     solver = spoq.SPOQ(x=data.xtrue,y=data.y,K=data.K,sigma=data.sigma,noise=data.noise)
     print("Running TR-VMFB algorithm on SPOQ penalty with p = {0!s} and q = {1!s}\n".format(solver.p,solver.q))
     start_time = time.time()

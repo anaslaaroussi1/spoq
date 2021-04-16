@@ -1,3 +1,6 @@
+"""This module creates the structure needed to run the recovery algorithm
+"""
+
 from src import utils
 from src import parser
 import os
@@ -7,7 +10,17 @@ import time
 
 
 class SPOQ(object):
+    """A Customized context manager to generate the most frequent words in a text file
+    
+    
+    Methods
+    -------
+    run()
+        runs the forward-backward algorithm to estimate the original signal
+
+    """
     def __init__(self,K=None,x=None,noise=None,sigma=None,y=None,J=5000, verbosity=0):
+
         self.input_path = os.path.join(os.getcwd(), "inputs")
         self.params = parser.ParamParser(os.path.join(self.input_path, "params.config"))
         self.K = K

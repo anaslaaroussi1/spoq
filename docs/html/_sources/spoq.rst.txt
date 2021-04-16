@@ -1,0 +1,7 @@
+spoq module
+============================================
+
+.. automodule:: src.spoq
+   :members:
+   :undoc-members:
+   :show-inheritance:
